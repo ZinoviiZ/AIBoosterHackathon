@@ -60,11 +60,13 @@ public class ImageService {
 
 	public String predictImage(MultipartFile file) {
 
+		System.out.println("Got file");
 		return file.getName();
 	}
 
-	public void test() {
-
+	public String test() {
 		out.println("DONE");
+		return "1";
+		
 	}
 }

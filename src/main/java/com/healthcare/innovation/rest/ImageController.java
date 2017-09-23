@@ -20,7 +20,7 @@ public class ImageController {
     @Autowired private ImageService imageService;
     
     @CrossOrigin(origins = "http://localhost")
-    @RequestMapping(value = "/image", method = POST)
+    @RequestMapping(value = "/image", method = POST, produces = "application/json")
     public String predictCancer(@RequestParam("image") MultipartFile file) {
 
     	String resp = imageService.predictImage(file);

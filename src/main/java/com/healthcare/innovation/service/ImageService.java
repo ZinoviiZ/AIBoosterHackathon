@@ -8,6 +8,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringWriter;
@@ -20,10 +23,7 @@ import static java.lang.System.out;
 @Service
 public class ImageService {
 
-	@PostConstruct
-	public void init() throws Exception {
-
-		out.println("start");
+	private String process(File fileToSys) throws IOException {
 		ClassLoader classLoader = getClass().getClassLoader();
 
 		StringBuilder sb = new StringBuilder();
@@ -32,7 +32,7 @@ public class ImageService {
 
 		sb.append("cd " + ff.getAbsolutePath() + "\n");
 		sb.append("pwd\n");
-		sb.append("python test.py\n");
+		sb.append("python test.py " + fileToSys.getAbsolutePath() + "\n");
 
 		// Start the shell
 		ProcessBuilder pb = new ProcessBuilder("/bin/bash");
@@ -48,25 +48,70 @@ public class ImageService {
 
 		// Retrieve and print output
 		String line;
+		String lastLine = "";
 		while (null != (line = br.readLine())) {
+			lastLine = line;
 			System.out.println("> " + line);
 		}
 		br.close();
 
 		// Make sure the shell has terminated, print out exit value
-		System.out.println("Exit code: " + bash.waitFor());
+		try {
+			System.out.println("Exit code: " + bash.waitFor());
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return lastLine;
+	}
 
+	@PostConstruct
+	public void init() throws Exception {
+
+		out.println("start");
+
+	}
+
+	private File convert(MultipartFile file) {
+		File convFile = new File(file.getOriginalFilename());
+		
+		FileOutputStream fos;
+		try {
+			convFile.createNewFile();
+			fos = new FileOutputStream(convFile);
+			fos.write(file.getBytes());
+			fos.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return convFile;
 	}
 
 	public String predictImage(MultipartFile file) {
 
+		File fileToSys = convert(file);
+		System.out.println(fileToSys.getAbsolutePath());
+		
 		System.out.println("Got file");
-		return file.getName();
+		String res = "DUNNO";
+		try {
+			res = process(fileToSys);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return res;
 	}
 
 	public String test() {
 		out.println("DONE");
 		return "1";
-		
+
 	}
 }

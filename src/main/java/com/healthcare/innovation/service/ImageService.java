@@ -1,11 +1,16 @@
 package com.healthcare.innovation.service;
 
+import org.python.core.PyObject;
+import org.python.util.PythonInterpreter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.StringWriter;
 
 import static java.lang.System.out;
 
@@ -15,34 +20,51 @@ import static java.lang.System.out;
 @Service
 public class ImageService {
 
-    @PostConstruct
-    public void init() throws Exception {
+	@PostConstruct
+	public void init() throws Exception {
 
-        out.println("start");
-        Process p = Runtime.getRuntime().exec("python /Users/zinoviyzubko/Downloads/test/test.py");
+		out.println("start");
+		ClassLoader classLoader = getClass().getClassLoader();
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        while (in.ready())
-            System.out.println("value is : "+in.readLine());
+		StringBuilder sb = new StringBuilder();
+		File ff = new File(classLoader.getResource("algorithm").getFile());
+		System.out.println(ff.getAbsolutePath());
 
-//        StringWriter writer = new StringWriter(); //ouput will be stored here
-//
-//        ScriptEngineManager manager = new ScriptEngineManager();
-//        ScriptContext context = new SimpleScriptContext();
-//
-//        context.setWriter(writer); //configures output redirection
-//        ScriptEngine engine = manager.getEngineByName("python");
-//        engine.eval(new FileReader("numbers.py"), context);
-//        System.out.println(writer.toString());
-    }
+		sb.append("cd " + ff.getAbsolutePath() + "\n");
+		sb.append("pwd\n");
+		sb.append("python test.py\n");
 
-    public String predictImage(MultipartFile file) {
+		// Start the shell
+		ProcessBuilder pb = new ProcessBuilder("/bin/bash");
+		Process bash = pb.start();
 
-        return file.getName();
-    }
+		// Pass commands to the shell
+		PrintStream ps = new PrintStream(bash.getOutputStream());
+		ps.println(sb);
+		ps.close();
 
-    public void test() {
+		// Get an InputStream for the stdout of the shell
+		BufferedReader br = new BufferedReader(new InputStreamReader(bash.getInputStream()));
 
-        out.println("DONE");
-    }
+		// Retrieve and print output
+		String line;
+		while (null != (line = br.readLine())) {
+			System.out.println("> " + line);
+		}
+		br.close();
+
+		// Make sure the shell has terminated, print out exit value
+		System.out.println("Exit code: " + bash.waitFor());
+
+	}
+
+	public String predictImage(MultipartFile file) {
+
+		return file.getName();
+	}
+
+	public void test() {
+
+		out.println("DONE");
+	}
 }

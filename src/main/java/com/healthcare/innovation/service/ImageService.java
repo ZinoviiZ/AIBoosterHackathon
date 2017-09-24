@@ -5,6 +5,8 @@ import org.python.util.PythonInterpreter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.healthcare.model.NNResponce;
+
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,7 +25,7 @@ import static java.lang.System.out;
 @Service
 public class ImageService {
 
-	private String process(File fileToSys) throws IOException {
+	private NNResponce process(File fileToSys) throws IOException {
 		ClassLoader classLoader = getClass().getClassLoader();
 
 		StringBuilder sb = new StringBuilder();
@@ -62,7 +64,16 @@ public class ImageService {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return lastLine;
+		
+		// temp trash
+		int x = Integer.parseInt(lastLine);
+		if(x % 2 == 1) {
+			return new NNResponce("78", "22");
+		}
+		else {
+			return new NNResponce("22", "78");
+		}
+//		return lastLine;
 	}
 
 	@PostConstruct
@@ -93,13 +104,13 @@ public class ImageService {
 		return convFile;
 	}
 
-	public String predictImage(MultipartFile file) {
+	public NNResponce predictImage(MultipartFile file) {
 
 		File fileToSys = convert(file);
 		System.out.println(fileToSys.getAbsolutePath());
 		
 		System.out.println("Got file");
-		String res = "DUNNO";
+		NNResponce res = null;
 		try {
 			res = process(fileToSys);
 		} catch (IOException e) {
